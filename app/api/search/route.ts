@@ -33,7 +33,11 @@ export async function POST(request: Request) {
                         content: `Provide detailed information about ${searchTerm}. Include sections with headers for: Overview, History, Key Features or Characteristics, and Significance or Impact. Format in markdown with # headers. Include citations for major claims.`
                     }
                 ],
-                max_tokens: 4000
+                max_tokens: 4000,
+                return_images: true,
+                temperature: 0,
+                search_recency_filter: "month",
+                search_domain_filter: ["-wikipedia.org"]
             })
         });
 

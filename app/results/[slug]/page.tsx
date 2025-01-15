@@ -12,27 +12,36 @@ export const metadata: Metadata = {
 const getResultData = async (slug: string): Promise<ArticleData> => {
     try {
         const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
+
         if (!baseUrl) {
             throw new Error("NEXT_PUBLIC_API_URL is not configured");
         }
+        if (!perplexityApiKey) {
+            throw new Error("PERPLEXITY_API_KEY is not configured");
+        }
 
-        const response = await fetch(`${baseUrl}/api/search`, {
+        // Get the article content with image from Perplexity API
+        const contentResponse = await fetch(`${baseUrl}/api/search`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${perplexityApiKey}`
             },
-            body: JSON.stringify({ searchTerm: slug.replace(/-/g, " ") }),
+            body: JSON.stringify({
+                searchTerm: slug.replace(/-/g, " "),
+                includeImages: true // Request images in the response
+            }),
             cache: "no-store"
         });
 
-        if (!response.ok) {
+        if (!contentResponse.ok) {
             throw new Error("Failed to fetch article data");
         }
 
-        const data = await response.json();
-
-        // Parse the markdown content from Perplexity
+        const data = await contentResponse.json();
         const content = data.content;
+        const imageUrl = data.imageUrl;
 
         // Extract citations if they exist at the end of the content
         let mainContent = content;
@@ -72,7 +81,9 @@ const getResultData = async (slug: string): Promise<ArticleData> => {
         return {
             title: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "),
             overview: {
-                image: "/placeholder.svg?height=300&width=300",
+                image:
+                    imageUrl ||
+                    `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="8"></line></svg>')}`,
                 quickFacts: [
                     { label: "Source", value: "Perplexity AI" },
                     { label: "Last Updated", value: new Date().toLocaleDateString() }
