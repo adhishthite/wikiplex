@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 
 const getResultData = async (slug: string): Promise<ArticleData> => {
     try {
-        const headersList = headers();
-        const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-        const host = headersList.get("host") || "localhost:3000";
-        const baseUrl = `${protocol}://${host}`;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!baseUrl) {
+            throw new Error("NEXT_PUBLIC_API_URL is not configured");
+        }
 
         const response = await fetch(`${baseUrl}/api/search`, {
             method: "POST",
