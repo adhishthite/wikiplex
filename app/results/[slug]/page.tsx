@@ -6,7 +6,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Citation } from "./citation";
 import Link from "next/link";
 
-// This would typically come from your API or database
 const getResultData = async (slug: string) => {
   try {
     // Simulating an API call
@@ -70,7 +69,7 @@ const getResultData = async (slug: string) => {
         { id: "3", content: "Reference 3: Expert analysis and insights" },
       ],
     };
-  } catch (error) {
+  } catch {
     throw new Error("Failed to fetch article data");
   }
 };
@@ -83,7 +82,7 @@ export default async function ResultPage({
   let data;
   try {
     data = await getResultData(params.slug);
-  } catch (error) {
+  } catch {
     return (
       <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center flex-1">
         <h1 className="text-4xl font-bold mb-4">Error</h1>
@@ -97,7 +96,7 @@ export default async function ResultPage({
   if (!data) notFound();
 
   return (
-    <div className="container mx-auto flex-1 pt-14">
+    <div className="container mx-auto flex-1">
       <div className="flex flex-col lg:flex-row min-h-[calc(100vh-3.5rem)]">
         {/* Left Navigation Column */}
         <aside className="lg:w-64 flex-shrink-0 border-r px-4 py-6 hidden lg:block">
