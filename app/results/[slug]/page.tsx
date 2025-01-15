@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
+import { Metadata } from "next";
 import ResultPageClient from "./ResultPageClient";
 import { ArticleData, Section, Citation } from "./types";
+
+export const metadata: Metadata = {
+    title: "Article | WikiPlex",
+    description: "Explore and learn about topics on WikiPlex"
+};
 
 const getResultData = async (slug: string): Promise<ArticleData> => {
     try {
