@@ -30,44 +30,55 @@ export default function SearchPage() {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-57px)] bg-background px-4">
             <motion.div
-                className="text-center mb-8"
+                className="text-center mb-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <h1 className="text-4xl sm:text-6xl font-bold mb-2 text-primary">
-                    <span className="inline-block transform transition-transform hover:scale-105 duration-200">
+                <h1 className="text-6xl sm:text-8xl font-bold mb-4 text-primary tracking-tight">
+                    <motion.span
+                        className="inline-block"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                    >
                         Wiki<span className="text-secondary">Plex</span>
-                    </span>
+                    </motion.span>
                 </h1>
-                <p className="text-lg text-muted-foreground">Explore the world of knowledge</p>
+                <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto">
+                    Your gateway to endless knowledge exploration
+                </p>
             </motion.div>
             <motion.div
-                className="w-full max-w-2xl"
+                className="w-full max-w-3xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
-                <form className="flex space-x-2" onSubmit={handleSubmit}>
+                <form className="flex space-x-3" onSubmit={handleSubmit}>
                     <div className="relative flex-grow">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                         <Input
                             type="search"
                             name="q"
                             placeholder="What do you want to learn about?"
-                            className="pl-10 pr-4 py-2 w-full"
+                            className="pl-12 pr-4 py-6 w-full text-xl sm:text-2xl rounded-xl"
                             required
                             disabled={isSearching}
                         />
                     </div>
-                    <Button type="submit" size="lg" disabled={isSearching}>
+                    <Button
+                        type="submit"
+                        size="lg"
+                        disabled={isSearching}
+                        className="px-8 py-6 text-lg rounded-xl"
+                    >
                         {isSearching ? (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                             >
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-5 h-5 animate-spin" />
                             </motion.div>
                         ) : (
                             "Search"
