@@ -5,71 +5,131 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Citation } from "./citation";
 import Link from "next/link";
+import { headers } from "next/headers";
 
-const getResultData = async (slug: string) => {
+interface Section {
+    id: string;
+    title: string;
+    content: string;
+}
+
+interface NavigationItem {
+    title: string;
+    href: string;
+}
+
+interface NavigationSection {
+    title: string;
+    items: NavigationItem[];
+}
+
+interface QuickFact {
+    label: string;
+    value: string;
+}
+
+interface Citation {
+    id: string;
+    content: string;
+}
+
+interface ArticleData {
+    title: string;
+    overview: {
+        image: string;
+        quickFacts: QuickFact[];
+    };
+    navigation: NavigationSection[];
+    sections: Section[];
+    citations: Citation[];
+}
+
+const getResultData = async (slug: string): Promise<ArticleData> => {
     try {
-        // Simulating an API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const headersList = headers();
+        const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+        const host = headersList.get("host") || "localhost:3000";
+        const baseUrl = `${protocol}://${host}`;
+
+        const response = await fetch(`${baseUrl}/api/search`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ searchTerm: slug.replace(/-/g, " ") }),
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch article data");
+        }
+
+        const data = await response.json();
+
+        // Parse the markdown content from Perplexity
+        const content = data.content;
+
+        // Extract citations if they exist at the end of the content
+        let mainContent = content;
+        let citationsList: Citation[] = [];
+
+        const citationSplitIndex = content.toLowerCase().lastIndexOf("suggested citations");
+        if (citationSplitIndex !== -1) {
+            mainContent = content.substring(0, citationSplitIndex).trim();
+            const citationsSection = content.substring(citationSplitIndex);
+            citationsList = citationsSection
+                .split("\n")
+                .filter(
+                    (line: string) =>
+                        line.trim() && !line.toLowerCase().includes("suggested citations")
+                )
+                .map((citation: string, index: number) => ({
+                    id: (index + 1).toString(),
+                    content: citation.trim()
+                }));
+        }
+
+        // Parse sections from the main content
+        const sections: Section[] = mainContent
+            .split("\n#")
+            .filter(Boolean)
+            .map((section: string) => {
+                const lines = section.trim().split("\n");
+                const title = lines[0].replace("#", "").trim();
+                const content = lines.slice(1).join("\n").trim();
+                return {
+                    id: title.toLowerCase().replace(/\s+/g, "-"),
+                    title,
+                    content
+                };
+            });
 
         return {
             title: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "),
             overview: {
                 image: "/placeholder.svg?height=300&width=300",
                 quickFacts: [
-                    { label: "Type", value: "Article" },
-                    { label: "Industry", value: "Technology" },
-                    { label: "Founded", value: "2023" },
-                    { label: "Headquarters", value: "San Francisco, CA" }
+                    { label: "Source", value: "Perplexity AI" },
+                    { label: "Last Updated", value: new Date().toLocaleDateString() }
                 ]
             },
             navigation: [
                 {
                     title: "Main sections",
-                    items: [
-                        { title: "History", href: "#history" },
-                        { title: "Features", href: "#features" },
-                        { title: "Technology", href: "#technology" }
-                    ]
-                },
-                {
-                    title: "Related pages",
-                    items: [
-                        { title: "Getting Started", href: "/getting-started" },
-                        { title: "Documentation", href: "/documentation" },
-                        { title: "API Reference", href: "/api" }
-                    ]
+                    items: sections.map((section) => ({
+                        title: section.title,
+                        href: `#${section.id}`
+                    }))
                 }
             ],
-            sections: [
-                {
-                    id: "history",
-                    title: "History",
-                    content: `The history section provides detailed information about the origins and development...`
-                },
-                {
-                    id: "features",
-                    title: "Features",
-                    content: `Key features and capabilities are outlined in this section...`
-                },
-                {
-                    id: "technology",
-                    title: "Technology",
-                    content: `The technology stack and implementation details...`
-                }
-            ],
-            citations: [
-                {
-                    id: "1",
-                    content: "Reference 1: Academic paper discussing the topic"
-                },
-                {
-                    id: "2",
-                    content: "Reference 2: Industry report with relevant statistics"
-                },
-                { id: "3", content: "Reference 3: Expert analysis and insights" }
-            ]
+            sections,
+            citations:
+                citationsList.length > 0
+                    ? citationsList
+                    : [{ id: "1", content: "Generated using Perplexity AI" }]
         };
-    } catch {
+    } catch (error) {
+        console.error("Error fetching data:", error);
         throw new Error("Failed to fetch article data");
     }
 };
@@ -128,10 +188,12 @@ export default async function ResultPage({ params }: { params: { slug: string } 
                                     <div className="prose prose-sm max-w-none">
                                         <p className="mb-4">
                                             {section.content}
-                                            <Citation
-                                                id={(index + 1).toString()}
-                                                content={data.citations[index].content}
-                                            />
+                                            {data.citations[index] && (
+                                                <Citation
+                                                    id={(index + 1).toString()}
+                                                    content={data.citations[index].content}
+                                                />
+                                            )}
                                         </p>
                                     </div>
                                     <Separator className="my-6" />
